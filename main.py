@@ -1,25 +1,23 @@
 # coding=utf-8
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
 """
 
+import sys, os, time
 import numpy as np
-import os
 import tensorflow as tf
 slim = tf.contrib.slim
 from lib.data_load.data_load_from_txt_mullabel import data_load_from_txt_mullabel
 from lib.model.build_model.build_net import net_arch
 from lib.utils.multi_label_utils import g_parameter
 from lib.utils.multi_label_utils import to_one_hot
-# from lib.train.train3 import train3 as train
 from keras.utils import np_utils
 import config
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+# 来自config.py的参数
 sample_dir = config.sample_dir
 num_classes = config.num_classes
 batch_size = config.batch_size
@@ -46,20 +44,30 @@ train_all_layers = config.train_all_layers
 checkpoint_path = config.checkpoint_path
 
 
-from lib.train.train_multi_label import train_multi_label as train
-train_data, train_label, valid_data, valid_label, train_n, valid_n, note_label = data_load_from_txt_mullabel(sample_dir, train_rate).gen_train_valid()
 
+from lib.train.train_multi_label import train_multi_label as train
+
+train_data, train_label, valid_data, valid_label, train_n, valid_n, note_label = data_load_from_txt_mullabel(sample_dir, train_rate).gen_train_valid()
 print ('note_label', note_label)
 print (train_data)
 print (train_label)
-if arch_model!='arch_seg_vgg16_conv' and arch_model!='arch_vgg16_ocr':
-    # train_label = np_utils.to_categorical(train_label, num_classes)
-    # valid_label = np_utils.to_categorical(valid_label, num_classes)
+
+if arch_model != 'arch_seg_vgg16_conv' and arch_model != 'arch_vgg16_ocr':
+    #train_label = np_utils.to_categorical(train_label, num_classes)
+    #valid_label = np_utils.to_categorical(valid_label, num_classes)
     train_label = to_one_hot(train_label, num_classes)
     valid_label = to_one_hot(valid_label, num_classes)
 print (train_label)
-if not os.path.isdir(train_dir):
-    os.makedirs(train_dir)
 
-train(train_data,train_label,valid_data,valid_label,train_dir,num_classes,batch_size,arch_model,learning_r_decay,learning_rate_base,decay_rate,dropout_prob,epoch,height,width,checkpoint_exclude_scopes,early_stop,EARLY_STOP_PATIENCE,fine_tune,train_all_layers,checkpoint_path,train_n,valid_n,g_parameter)
+if not os.path.isdir(train_dir): os.makedirs(train_dir)
 
+print("training start...\n")
+#"""
+train(train_data, train_label, valid_data, valid_label, 
+      train_dir, num_classes, batch_size, arch_model, 
+      learning_r_decay, learning_rate_base, decay_rate, dropout_prob, epoch, 
+      height, width, 
+      checkpoint_exclude_scopes, early_stop, EARLY_STOP_PATIENCE, 
+      fine_tune, train_all_layers, 
+      checkpoint_path, train_n, valid_n, g_parameter)
+#"""

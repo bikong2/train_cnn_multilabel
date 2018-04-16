@@ -1,9 +1,7 @@
-# coding=utf-8
+# _*_ coding: utf-8 _*_
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
 """
 
 import numpy as np
@@ -13,27 +11,51 @@ from lib.utils.multi_label_utils import get_next_batch_from_path, shuffle_train_
 from lib.utils.multi_label_utils import input_placeholder, build_net_multi_label, cost, train_op, model_mAP
 import os
 
-def train_multi_label(train_data,train_label,valid_data,valid_label,train_dir,num_classes,batch_size,arch_model,learning_r_decay,learning_rate_base,decay_rate,dropout_prob,epoch,height,width,checkpoint_exclude_scopes,early_stop,EARLY_STOP_PATIENCE,fine_tune,train_all_layers,checkpoint_path,train_n,valid_n,g_parameter):
-    # ---------------------------------------------------------------------------------#
+def train_multi_label(
+        train_data,
+        train_label,
+        valid_data,
+        valid_label,
+        train_dir,
+        num_classes,
+        batch_size,
+        arch_model,
+        learning_r_decay,
+        learning_rate_base,
+        decay_rate,
+        dropout_prob,
+        epoch,
+        height,
+        width,
+        checkpoint_exclude_scopes,
+        early_stop,
+        EARLY_STOP_PATIENCE,
+        fine_tune,
+        train_all_layers,
+        checkpoint_path,
+        train_n,
+        valid_n,
+        g_parameter):
+    #************************************************************************************#
     X, Y, is_train, keep_prob_fc = input_placeholder(height, width, num_classes)
-    net, _ = build_net_multi_label(X, num_classes, keep_prob_fc, is_train,arch_model)
-    variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
+    net, _ = build_net_multi_label(X, num_classes, keep_prob_fc, is_train, arch_model)
+    variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
     loss = cost(Y, net)
-    global_step = tf.Variable(0, trainable=False)  
+    global_step = tf.Variable(0, trainable=False)
     if learning_r_decay:
-        learning_rate = tf.train.exponential_decay(  
-            learning_rate_base,                     
-            global_step * batch_size,  
-            train_n,                
-            decay_rate,                       
-            staircase=True)  
+        learning_rate = tf.train.exponential_decay(
+            learning_rate_base,
+            global_step*batch_size,
+            train_n,
+            decay_rate,
+            staircase=True)
     else:
         learning_rate = learning_rate_base
     if train_all_layers:
         variables_to_train = []
     optimizer = train_op(learning_rate, loss, variables_to_train, global_step)
     accuracy = model_mAP(net, Y)
-    #------------------------------------------------------------------------------------#
+    #************************************************************************************#
     sess = tf.Session()
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -46,9 +68,9 @@ def train_multi_label(train_data,train_label,valid_data,valid_label,train_dir,nu
         # saver2.restore(sess, fine_tune_dir)
         latest = tf.train.latest_checkpoint(train_dir)
         if not latest:
-            print ("No checkpoint to continue from in", train_dir)
+            print("No checkpoint to continue from in", train_dir)
             sys.exit(1)
-        print ("resume", latest)
+        print("resume", latest)
         saver2.restore(sess, latest)
     
     # early stopping
@@ -58,20 +80,18 @@ def train_multi_label(train_data,train_label,valid_data,valid_label,train_dir,nu
     for epoch_i in range(epoch):
         for batch_i in range(int(train_n/batch_size)):
             images, labels = get_next_batch_from_path(train_data, train_label, batch_i, height, width, batch_size=batch_size, training=True)
-            los, _ = sess.run([loss,optimizer], feed_dict={X: images, Y: labels, is_train:True, keep_prob_fc:dropout_prob})
-            print (los)
+            los, _ = sess.run([loss, optimizer], feed_dict={X: images, Y: labels, is_train:True, keep_prob_fc:dropout_prob})
+            print(los)
             checkpoint_path = os.path.join(train_dir, 'model.ckpt')
             saver2.save(sess, checkpoint_path, global_step=batch_i, write_meta_graph=False)
             if batch_i%20==0:
                 loss_, acc_ = sess.run([loss, accuracy], feed_dict={X: images, Y: labels, is_train:False, keep_prob_fc:1.0})
                 print('Batch: {:>2}: Training loss: {:>3.5f}, Training mAP: {:>3.5f}'.format(batch_i, loss_, acc_))
-
             if batch_i%100==0:
                 images, labels = get_next_batch_from_path(valid_data, valid_label, batch_i%(int(valid_n/batch_size)), height, width, batch_size=batch_size, training=False)
                 ls, acc = sess.run([loss, accuracy], feed_dict={X: images, Y: labels, is_train:False, keep_prob_fc:1.0})
                 print('Batch: {:>2}: Validation loss: {:>3.5f}, Validation mAP: {:>3.5f}'.format(batch_i, ls, acc))
             
-        
         print('Epoch===================================>: {:>2}'.format(epoch_i))
         valid_ls = 0
         valid_acc = 0
@@ -85,7 +105,8 @@ def train_multi_label(train_data,train_label,valid_data,valid_label,train_dir,nu
         if valid_acc/int(valid_n/batch_size) > 0.90:
             checkpoint_path = os.path.join(train_dir, 'model.ckpt')
             saver2.save(sess, checkpoint_path, global_step=epoch_i, write_meta_graph=False)
-        # ---------------------------------------------------------------------------------#
+        
+        #************************************************************************************#
         if early_stop:
             loss_valid = valid_ls/int(valid_n/batch_size)
             if loss_valid < best_valid:
@@ -97,3 +118,5 @@ def train_multi_label(train_data,train_label,valid_data,valid_label,train_dir,nu
                 break
         train_data, train_label = shuffle_train_data(train_data, train_label)
     sess.close()
+
+# The EDN!!!

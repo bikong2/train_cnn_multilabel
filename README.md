@@ -2,7 +2,7 @@
 # 自己搭建的一个多标签训练框架，包含模型有：cnn: vgg(vgg16,vgg19), resnet(resnet_v2_50,resnet_v2_101,resnet_v2_152)等。
 # 此框架主要针对多标签任务， 后面会陆续搭建多任务、检测等框架，欢迎关注。
 使用说明：
-搭建时使用的环境为：Python3.5, tensorflow1.4
+搭建时使用的环境为：Python3.5/Python2.7, tensorflow1.4
 
 变量设置参考config.py。
 详细说明参见config.py。

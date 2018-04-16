@@ -1,9 +1,8 @@
-# coding=utf-8
+# _*_ coding: utf-8 _*_
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
+@brief:  optimizer
 """
 
 import tensorflow as tf 
@@ -86,6 +85,4 @@ def _configure_optimizer(learning_rate):
   else:
     raise ValueError('Optimizer [%s] was not recognized', FLAGS.optimizer)
   return optimizer
-
-
 

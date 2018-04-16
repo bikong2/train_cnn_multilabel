@@ -1,9 +1,7 @@
-# coding=utf-8
+# _*_ coding: utf-8 _*_
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
 """
 
 import tensorflow as tf
@@ -12,13 +10,12 @@ import numpy as np
 import sklearn.metrics
 import cv2
 import os
-# from data_aug.data_aug import DataAugmenters
 from lib.model.build_model.build_net import net_arch
-import tensorflow as tf
 from lib.data_aug.data_aug import DataAugmenters
 from lib.loss.loss import softmax_loss, sigmoid_loss, squared_loss, add_l2
 from lib.optimizer.optimizer import adam_optimizer,sgd_optimizer, rmsprop_optimizer
 from lib.optimizer.optimizer_minimize import optimizer_minimize, optimizer_apply_gradients
+
 
 def g_parameter(checkpoint_exclude_scopes):
     exclusions = []
@@ -35,7 +32,7 @@ def g_parameter(checkpoint_exclude_scopes):
                 break
         if not excluded:
             variables_to_restore.append(var)
-    return variables_to_restore,variables_to_train
+    return variables_to_restore, variables_to_train
 
 def shuffle_train_data(train_imgs, train_labels):
     index = [i for i in range(len(train_imgs))]
@@ -46,37 +43,38 @@ def shuffle_train_data(train_imgs, train_labels):
     train_labels = train_labels[index]
     return train_imgs, train_labels
 
+# [-1.0, +1.0]
 def data_norm(img):
     img = img / 255.0
     img = img - 0.5
     img = img * 2
     return img
+
 def data_aug(img):
     return DataAugmenters(img).run()
 
 def get_next_batch_from_path(image_path, image_labels, pointer, height, width, batch_size=64, training=True):
-    batch_x = np.zeros([batch_size, height, width,3])
+    batch_x = np.zeros([batch_size, height, width, 3])
     num_classes = len(image_labels[0])
-    batch_y = np.zeros([batch_size, num_classes]) 
-    for i in range(batch_size):  
+    batch_y = np.zeros([batch_size, num_classes])
+    for i in range(batch_size):
         image = cv2.imread(image_path[i+pointer*batch_size])
-        image = cv2.resize(image, (height, width)) 
-        if training: 
+        image = cv2.resize(image, (height, width))
+        if training:
             # image = data_aug([image])[0]
             image = data_aug(image)
         image = data_norm(image)
-        batch_x[i,:,:,:] = image
+        batch_x[i, :, :, :] = image
         batch_y[i] = image_labels[i+pointer*batch_size]
     return batch_x, batch_y
 
 def img_crop(img, box):
-    # y1, x1, y2, x2 = box[1]-20, box[0]-20, box[1]+box[3]+40, box[0]+box[2]+40
     x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
     img = img[y1:y2, x1:x2]
     return img
 
 
-#######
+#######################################################################
 def input_placeholder(height, width, num_classes):
     X = tf.placeholder(tf.float32, [None, height, width, 3])
     Y = tf.placeholder(tf.float32, [None, num_classes])
@@ -103,6 +101,7 @@ def build_net(X, num_classes, keep_prob_fc, is_train, arch_model):
         print ('{} is error!', arch_model)
     return net, net_vis
 
+
 def build_net_multi_label(X, num_classes, keep_prob_fc, is_train, arch_model):
     arch = net_arch()
     if arch_model == "arch_inception_v4_multi_label":
@@ -122,9 +121,7 @@ def build_net_multi_label(X, num_classes, keep_prob_fc, is_train, arch_model):
     return net, net_vis
 
 
-
 def cost(label, logit):
-    # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = label, logits = logit))
     loss = sigmoid_loss(label = label, logit = logit)
     return loss
 
@@ -134,13 +131,14 @@ def train_op(learning_rate, loss, variables_to_train, global_step):
     with tf.control_dependencies(update_ops):
         if variables_to_train == []:
             opt_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, global_step=global_step)
-            # optimizer = adam_optimizer(learning_rate)
-            # opt_op = optimizer_minimize(optimizer, loss, global_step)
+            #optimizer = adam_optimizer(learning_rate)
+            #opt_op = optimizer_minimize(optimizer, loss, global_step)
         else:
             #opt_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, var_list = variables_to_train, global_step=global_step)
             optimizer = adam_optimizer(learning_rate)
             opt_op = optimizer_minimize(optimizer, loss, global_step, var_list = variables_to_train)
     return opt_op
+
 
 def model_accuracy(net, Y, num_classes):
     predict = tf.reshape(net, [-1, num_classes])
@@ -150,6 +148,7 @@ def model_accuracy(net, Y, num_classes):
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     return accuracy
 
+
 def model_accuracy_seg(net, Y, num_classes):
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
@@ -158,41 +157,40 @@ def model_accuracy_seg(net, Y, num_classes):
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     return accuracy
 
-def compute_map(net, Y):
 
+def compute_map(net, Y):
     nclasses = Y.shape[1]
     all_ap = []
     for cid in range(nclasses):
         gt_cls = Y[:, cid].astype('float32')
         pred_cls = net[:, cid].astype('float32')
-        # 某个人标签没有属性值，continue；
-        if np.sum(gt_cls) == 0:
-            continue
+        # 某个人标签没有属性值，continue
+        if np.sum(gt_cls) == 0: continue
         # As per PhilK. code:
         # https://github.com/philkr/voc-classification/blob/master/src/train_cls.py
         pred_cls -= 1e-5 * gt_cls
-        ap = sklearn.metrics.average_precision_score(
-                                                     gt_cls, pred_cls, average=None)
+        ap = sklearn.metrics.average_precision_score(gt_cls, pred_cls, average=None)
         all_ap.append(ap)
     mAP = np.mean(all_ap).astype('float32')
     return mAP
 
+
 def model_mAP(net, Y):
-    mAP = tf.py_func(compute_map,[net, Y], tf.float32)
+    mAP = tf.py_func(compute_map, [net, Y], tf.float32)
     return mAP
+
 
 # 同样也可用于多标签
 def to_one_hot(labels, num_classes):
     labels_onehot = []
     for i in range(len(labels)):
-        label = np.zeros([num_classes], np.float32)  # 标签容器，注意大小---------------------------change------------------------------------
+        label = np.zeros([num_classes], np.float32)  # 标签容器，注意大小: change it
         for j in list([labels[i]]):
             try:
-                label[j] = 1.  # 若图像标签为j，label[j] = 1
+                label[j] = 1.                        # 若图像标签为j，label[j] = 1
             except():
                 continue
         labels_onehot += [label]
     return labels_onehot
 
-
-
+# The END!!!

@@ -1,11 +1,12 @@
 # coding=utf-8
 
 # 训练文件夹
-sample_dir = "train.txt" # 可以为txt， 但是需要该代码
+sample_dir = "train.txt" # 可以为txt， 但是需要改代码
 # 需要分类的类别数量
 num_classes = 20
 # 最小批训练的大小
-batch_size = 4
+batch_size = 8
+
 # 选择使用的模型
 # arch_model="arch_resnet_v2_50_multi_label"
 arch_model = "arch_inception_v4_multi_label"
@@ -27,10 +28,12 @@ decay_rate = 0.95
 height, width = 224,224 #224, 224
 # 模型保存的路径
 train_dir = 'model'
-# 是否进行fine-tune。 选择fine-tune的的参数
+
+# 是否进行fine-tune，选择fine-tune的的参数
 fine_tune = False
 # 是否训练所有层的参数
 train_all_layers = False
+
 # 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
 # checkpoint_path="pretrain/inception_v4/inception_v4.ckpt";
 # checkpoint_path="pretrain/resnet_v2_50/resnet_v2_50.ckpt"

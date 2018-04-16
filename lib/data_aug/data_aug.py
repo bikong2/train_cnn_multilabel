@@ -1,9 +1,8 @@
-# coding=utf-8
+# _*_ coding: utf-8 _*_
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
+@brief:  DataAugmenters
 """
 
 import numpy as np
@@ -18,28 +17,29 @@ class DataAugmenters():
     def _random_fliplr(self, random_fliplr=True):
         if random_fliplr and np.random.choice([True, False]):
             self.img = np.fliplr(self.img)
+            #self.img = np.flipud(self.img)
     
     def _random_flipud(self, random_flipud=True):
         if random_flipud and np.random.choice([True, False]):
-            self.img = np.fliplr(self.img)
+            #self.img = np.fliplr(self.img)
+            self.img = np.flipud(self.img)
     
     def _random_rotation(self, random_rotation=True):
         if random_rotation and np.random.choice([True, False]):
-            w,h = self.img.shape[1], self.img.shape[0]
-            angle = np.random.randint(0,360)
+            w, h = self.img.shape[1], self.img.shape[0]
+            angle = np.random.randint(0, 360)
             rotate_matrix = cv2.getRotationMatrix2D(center=(self.img.shape[1]/2, self.img.shape[0]/2), angle=angle, scale=0.7)
-            self.img = cv2.warpAffine(self.img, rotate_matrix, (w,h))
+            self.img = cv2.warpAffine(self.img, rotate_matrix, (w, h))
 
     def _random_exposure(self, random_exposure=True):
         if random_exposure and np.random.choice([True, False]):
-            e_rate = np.random.uniform(0.5,1.5)
+            e_rate = np.random.uniform(0.5, 1.5)
             self.img = exposure.adjust_gamma(self.img, e_rate)
     
-    # 裁剪
     def _random_crop(self, crop_size = 299, random_crop = True):
         if random_crop and np.random.choice([True, False]):
             if self.img.shape[1] > crop_size:
-                sz1 = self.img.shape[1] // 2
+                sz1 = self.img.shape[1] // 2 # //取整除，返回商的整数部分
                 sz2 = crop_size // 2
                 diff = sz1 - sz2
                 (h, v) = (np.random.randint(0, diff + 1), np.random.randint(0, diff + 1))
@@ -51,3 +51,5 @@ class DataAugmenters():
         for func in data_aug_func:
             func()
         return self.img
+
+

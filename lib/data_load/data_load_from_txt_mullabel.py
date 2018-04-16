@@ -1,12 +1,12 @@
-# coding=utf-8
+# _*_ coding: utf-8 _*_
 """
-Created on 2017 10.17
-@author: liupeng
-wechat: lp9628
-blog: http://blog.csdn.net/u014365862/article/details/78422372
+@author: lixihua9@126.com
+@date:   20180417
+@brief:  data_load_from_txt_mullabel
 """
 
 from lib.utils.multi_label_utils import shuffle_train_data
+
 
 class data_load_from_txt_mullabel(object):
 
@@ -21,9 +21,7 @@ class data_load_from_txt_mullabel(object):
         data_lines = open(self.img_dir, 'r').readlines() 
         for line in data_lines:
             img_path = line.split(' ')[0]
-            img_label = line.split(' ')[1]
-            img_label = img_label.split('\n')[0]
-            img_label = img_label.split(',')
+            img_label = line.split(' ')[1].split('\n')[0].split(',')
             k = []
             for label in img_label:
               k += [int(label)]
@@ -35,7 +33,7 @@ class data_load_from_txt_mullabel(object):
         self._gen_img_path()
         image_n = len(self.train_imgs)
         train_n = int(image_n*self.train_rate)
-        valid_n = int(image_n*(1-self.train_rate))
+        valid_n = int(image_n*(1 - self.train_rate))
         train_data, train_label = self.train_imgs[0:train_n], self.train_labels[0:train_n]
         valid_data, valid_label = self.train_imgs[train_n:image_n], self.train_labels[train_n:image_n]
         
@@ -43,7 +41,7 @@ class data_load_from_txt_mullabel(object):
 
 # 以下测试用
 if __name__ == '__main__':
-    data = data_load_from_txt('train.txt', 0.9)
-    train_data, train_label, valid_data, valid_label, train_n, valid_n = data.gen_train_valid()
-    print (train_data)
-    print (train_label)
+    data = data_load_from_txt_mullabel('train.txt', 0.9)
+    train_data, train_label, valid_data, valid_label, train_n, valid_n, _ = data.gen_train_valid()
+    print(train_data)
+    print(train_label)
